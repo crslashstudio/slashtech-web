@@ -121,12 +121,13 @@ const Hero: React.FC<HeroProps> = ({ content, theme }) => {
 
       return () => mm.revert();
     }
-  }, []);
+  }, [theme]);
 
   const renderHeadline = () => {
-    const text = theme === 'fresh' ? 'Systems' : 'slashtech';
+    // Change text "System" to "Digital Systems" (fulfilling "Digital System" request in context of plural "Systems")
+    const text = theme === 'fresh' ? 'Digital Systems' : 'slashtech';
     return text.split('').map((char, i) => (
-      <span key={i} className="hero-char inline-block">{char}</span>
+      <span key={i} className="hero-char inline-block">{char === ' ' ? '\u00A0' : char}</span>
     ));
   };
 
@@ -167,7 +168,7 @@ const Hero: React.FC<HeroProps> = ({ content, theme }) => {
       {/* Hero Headline */}
       <div className="relative z-20 w-full flex flex-col items-center md:items-start select-none">
         <div className="flex items-start">
-          <h1 className="text-[15vw] md:text-[14vw] font-black leading-[0.8] tracking-[-0.06em] text-main hero-title-landscape">
+          <h1 className="text-[12vw] md:text-[12vw] font-black leading-[0.8] tracking-[-0.06em] text-main hero-title-landscape">
             {renderHeadline()}
           </h1>
           {theme !== 'fresh' && (
@@ -175,7 +176,8 @@ const Hero: React.FC<HeroProps> = ({ content, theme }) => {
           )}
         </div>
         <h2 className="text-[8vw] md:text-[6vw] font-serif italic font-medium leading-none mt-2 ml-2 text-main opacity-80 hero-sub-landscape">
-          {theme === 'fresh' ? 'Intelligence' : 'Systems'}
+          {/* Change text "Intelligence" to "Builder" and "Systems" to "Digital Systems" */}
+          {theme === 'fresh' ? 'Builder' : 'Digital Systems'}
         </h2>
       </div>
 

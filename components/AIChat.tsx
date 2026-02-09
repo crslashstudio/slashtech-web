@@ -125,30 +125,65 @@ const SystemUI = ({ data }: { data: SystemUIData }) => {
 };
 
 const ThinkingIndicator = ({ lang }: { lang: 'EN' | 'ID' }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (typeof gsap !== 'undefined' && gridRef.current) {
-      gsap.to(gridRef.current.querySelectorAll('.node'), {
-        opacity: 0.1,
-        duration: 0.6,
-        repeat: -1,
-        yoyo: true,
-        stagger: { grid: [4, 4], from: "center", amount: 1 }
-      });
+    if (typeof gsap !== 'undefined') {
+      if (gridRef.current) {
+        // Sophisticated node animation
+        gsap.to(gridRef.current.querySelectorAll('.node'), {
+          opacity: 0.1,
+          scale: 0.5,
+          backgroundColor: 'var(--accent)',
+          duration: 0.8,
+          repeat: -1,
+          yoyo: true,
+          stagger: { 
+            grid: [4, 4], 
+            from: "center", 
+            amount: 1.2,
+            ease: "sine.inOut" 
+          }
+        });
+      }
+      if (containerRef.current) {
+        // Entrance animation
+        gsap.fromTo(containerRef.current,
+          { opacity: 0, scale: 0.9, y: 15 },
+          { opacity: 1, scale: 1, y: 0, duration: 0.5, ease: "back.out(1.5)" }
+        );
+        
+        // Subtle background glow pulse
+        gsap.to(containerRef.current, {
+          boxShadow: '0 0 20px 0px rgba(var(--accent-rgb), 0.1)',
+          duration: 2,
+          repeat: -1,
+          yoyo: true,
+          ease: "sine.inOut"
+        });
+      }
     }
   }, []);
 
   return (
-    <div className="flex flex-col gap-4 p-6 bg-theme rounded-2xl border border-theme animate-in fade-in slide-in-from-bottom-2">
-      <div ref={gridRef} className="grid grid-cols-4 gap-1.5 w-max">
-        {[...Array(16)].map((_, i) => (
-          <div key={i} className="node w-1 h-1 rounded-full bg-accent opacity-60" />
-        ))}
+    <div className="flex justify-start mb-6">
+      <div 
+        ref={containerRef} 
+        className="flex flex-col gap-4 p-5 bg-theme rounded-[2rem] rounded-tl-none border border-theme shadow-sm max-w-[92%]"
+      >
+        <div ref={gridRef} className="grid grid-cols-4 gap-1.5 w-max">
+          {[...Array(16)].map((_, i) => (
+            <div key={i} className="node w-1 h-1 rounded-full bg-muted opacity-40" />
+          ))}
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-1.5 h-1.5 bg-accent rounded-full animate-pulse" />
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted opacity-70">
+            {lang === 'EN' ? 'Thinking...' : 'Berpikir...'}
+          </p>
+        </div>
       </div>
-      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted animate-pulse">
-        {lang === 'EN' ? 'Processing digital nodes...' : 'Memproses simpul data...'}
-      </p>
     </div>
   );
 };
@@ -170,6 +205,8 @@ const MarkdownRenderer = memo(({ text }: { text: string }) => {
 
 const MessageItem = memo(({ message, lang }: { message: Message; lang: 'EN' | 'ID' }) => {
   const isUser = message.role === 'user';
+  const bubbleRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   
   let cleanText = message.text;
   let systemData: SystemUIData | null = null;
@@ -182,14 +219,60 @@ const MessageItem = memo(({ message, lang }: { message: Message; lang: 'EN' | 'I
     } catch (e) {}
   }
 
+  useEffect(() => {
+    if (typeof gsap !== 'undefined' && bubbleRef.current) {
+      // Sophisticated elastic pop-in animation
+      const tl = gsap.timeline();
+      
+      tl.fromTo(bubbleRef.current,
+        { 
+          opacity: 0, 
+          y: 30, 
+          scale: 0.8,
+          transformOrigin: isUser ? "bottom right" : "bottom left" 
+        },
+        { 
+          opacity: 1, 
+          y: 0, 
+          scale: 1, 
+          duration: 0.8, 
+          ease: "elastic.out(1, 0.75)" 
+        }
+      );
+
+      if (contentRef.current) {
+        tl.fromTo(contentRef.current,
+          { opacity: 0, y: 5 },
+          { opacity: 1, y: 0, duration: 0.4 },
+          "-=0.5"
+        );
+      }
+
+      // If it's an AI message, add a subtle entrance glow
+      if (!isUser) {
+        gsap.to(bubbleRef.current, {
+          boxShadow: '0 0 25px 0px rgba(0, 0, 0, 0.1)',
+          duration: 1.5,
+          repeat: 1,
+          yoyo: true
+        });
+      }
+    }
+  }, []);
+
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-6`}>
-      <div className={`max-w-[92%] p-5 rounded-[2rem] text-[13px] leading-[1.6] transition-all duration-500 ${
-        isUser 
-          ? 'bg-black text-white rounded-tr-none shadow-xl' 
-          : 'bg-theme text-main rounded-tl-none border border-theme shadow-sm'
-      }`}>
-        <MarkdownRenderer text={cleanText} />
+      <div 
+        ref={bubbleRef}
+        className={`max-w-[92%] p-5 rounded-[2rem] text-[13px] leading-[1.6] transition-all duration-500 ${
+          isUser 
+            ? 'bg-black text-white rounded-tr-none shadow-xl' 
+            : 'bg-theme text-main rounded-tl-none border border-theme shadow-sm'
+        }`}
+      >
+        <div ref={contentRef}>
+          <MarkdownRenderer text={cleanText} />
+        </div>
         {systemData && <SystemUI data={systemData} />}
       </div>
     </div>
@@ -315,7 +398,7 @@ const AIChat: React.FC<{ lang: 'EN' | 'ID' }> = ({ lang }) => {
               ) : (
                 <>
                   {messages.map((m, idx) => <MessageItem key={idx} message={m} lang={lang} />)}
-                  {isLoading && messages[messages.length-1].role === 'user' && <ThinkingIndicator lang={lang} />}
+                  {isLoading && messages[messages.length-1]?.role === 'user' && <ThinkingIndicator lang={lang} />}
                 </>
               )}
             </div>
